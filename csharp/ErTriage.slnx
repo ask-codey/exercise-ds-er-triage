@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="ErTriage/ErTriage.csproj" />
+  <Project Path="ErTriage.Tests/ErTriage.Tests.csproj" />
+</Solution>
