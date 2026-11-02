@@ -90,3 +90,28 @@ test("a busy night", () => {
   });
   assert.equal(waiting.count(), 0, "Not yet: everyone has been seen.");
 });
+
+test("the disaster drill stays fast", () => {
+  const waiting = new TriageQueue();
+  const started = performance.now();
+  for (let i = 1; i <= 100000; i++) {
+    waiting.add(`Patient ${i}`, (i * 7) % 5 + 1);
+  }
+  const seen: (string | null)[] = [];
+  for (let i = 0; i < 100000; i++) {
+    seen.push(waiting.next());
+  }
+  const seconds = (performance.now() - started) / 1000;
+  let number = 0;
+  for (let urgency = 1; urgency <= 5; urgency++) {
+    for (let i = 1; i <= 100000; i++) {
+      if ((i * 7) % 5 + 1 === urgency) {
+        if (seen[number] !== `Patient ${i}`) {
+          assert.fail(`Not yet: in the drill, patient number ${number + 1} to be seen should be Patient ${i}.`);
+        }
+        number++;
+      }
+    }
+  }
+  assert.ok(seconds < 3, `Not yet: the drill's 100,000 arrivals and calls took ${seconds.toFixed(1)} seconds. When each arrival and each call moves a patient at most one level per step, it takes about one.`);
+});

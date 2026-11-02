@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using ErTriage;
 
 namespace ErTriage.Tests;
@@ -114,5 +115,35 @@ public class TriageQueueTests
             Assert.AreEqual(arrivals[i].Name, waiting.Next(), "Not yet: on a busy night of 10,000 patients, patient number " + (i + 1) + " to be seen should be " + arrivals[i].Name + ".");
         }
         Assert.AreEqual(0, waiting.Count, "Not yet: everyone has been seen.");
+    }
+
+    [TestMethod]
+    public void TheDisasterDrillStaysFast()
+    {
+        TriageQueue waiting = new TriageQueue();
+        Stopwatch watch = Stopwatch.StartNew();
+        for (int i = 1; i <= 100000; i++)
+        {
+            waiting.Add("Patient " + i, i * 7 % 5 + 1);
+        }
+        List<string?> seen = new List<string?>();
+        for (int i = 0; i < 100000; i++)
+        {
+            seen.Add(waiting.Next());
+        }
+        watch.Stop();
+        int number = 0;
+        for (int urgency = 1; urgency <= 5; urgency++)
+        {
+            for (int i = 1; i <= 100000; i++)
+            {
+                if (i * 7 % 5 + 1 == urgency)
+                {
+                    Assert.AreEqual("Patient " + i, seen[number], "Not yet: in the drill, patient number " + (number + 1) + " to be seen should be Patient " + i + ".");
+                    number++;
+                }
+            }
+        }
+        Assert.IsTrue(watch.Elapsed.TotalSeconds < 3, "Not yet: the drill's 100,000 arrivals and calls took " + watch.Elapsed.TotalSeconds.ToString("0.0") + " seconds. When each arrival and each call moves a patient at most one level per step, it takes about one.");
     }
 }

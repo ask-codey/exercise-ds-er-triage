@@ -1,5 +1,7 @@
 # The tests for your waiting list. You don't need to change this file.
 # Each message says what was expected, so a failing test tells you what to look at.
+import time
+
 from triage import TriageQueue
 
 
@@ -82,3 +84,16 @@ def test_a_busy_night():
         assert waiting.next() == name, \
             f"Not yet: on a busy night of 10,000 patients, patient number {number} to be seen should be {name}."
     assert waiting.count() == 0, "Not yet: everyone has been seen."
+
+
+def test_the_disaster_drill_stays_fast():
+    waiting = TriageQueue()
+    started = time.perf_counter()
+    for i in range(1, 100001):
+        waiting.add(f"Patient {i}", i * 7 % 5 + 1)
+    seen = [waiting.next() for _ in range(100000)]
+    seconds = time.perf_counter() - started
+    expected = [f"Patient {i}" for urgency in range(1, 6) for i in range(1, 100001) if i * 7 % 5 + 1 == urgency]
+    for number, (name, want) in enumerate(zip(seen, expected), start=1):
+        assert name == want, f"Not yet: in the drill, patient number {number} to be seen should be {want}."
+    assert seconds < 3, f"Not yet: the drill's 100,000 arrivals and calls took {seconds:.1f} seconds. When each arrival and each call moves a patient at most one level per step, it takes about one."

@@ -1,5 +1,6 @@
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -106,5 +107,31 @@ class TriageQueueTest {
                 "Not yet: on a busy night of 10,000 patients, patient number " + (i + 1) + " to be seen should be " + arrivals.get(i).name() + ".");
         }
         assertEquals(0, waiting.size(), "Not yet: everyone has been seen.");
+    }
+
+    @Test
+    void theDisasterDrillStaysFast() {
+        TriageQueue waiting = new TriageQueue();
+        long started = System.nanoTime();
+        for (int i = 1; i <= 100000; i++) {
+            waiting.add("Patient " + i, i * 7 % 5 + 1);
+        }
+        List<String> seen = new ArrayList<>();
+        for (int i = 0; i < 100000; i++) {
+            seen.add(waiting.next());
+        }
+        double seconds = (System.nanoTime() - started) / 1e9;
+        int number = 0;
+        for (int urgency = 1; urgency <= 5; urgency++) {
+            for (int i = 1; i <= 100000; i++) {
+                if (i * 7 % 5 + 1 == urgency) {
+                    String expected = "Patient " + i;
+                    int place = number + 1;
+                    assertEquals(expected, seen.get(number), () -> "Not yet: in the drill, patient number " + place + " to be seen should be " + expected + ".");
+                    number++;
+                }
+            }
+        }
+        assertTrue(seconds < 3, "Not yet: the drill's 100,000 arrivals and calls took %.1f seconds. When each arrival and each call moves a patient at most one level per step, it takes about one.".formatted(seconds));
     }
 }
